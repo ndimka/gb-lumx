@@ -64,30 +64,30 @@
 
         $scope.$on('lx-dialog__open', function(event, id, params, deferred)
         {
-            if (id === lxDialog.id)
+            if (!event.defaultPrevented && id === lxDialog.id)
             {
                 if (open(params, deferred)) {
                     deferredInstance = deferred;
                 }
-                event.stopPropagation();
+                event.preventDefault();
             }
         });
 
         $scope.$on('lx-dialog__close', function(event, id, params)
         {
-            if (id === lxDialog.id || id === undefined)
+            if (!event.defaultPrevented && id === lxDialog.id || id === undefined)
             {
                 close(false, params);
-                event.stopPropagation();
+                event.preventDefault();
             }
         });
 
         $scope.$on('lx-dialog__cancel', function(event, id)
         {
-            if (id === lxDialog.id || id === undefined)
+            if (!event.defaultPrevented && id === lxDialog.id || id === undefined)
             {
                 close(true);
-                event.stopPropagation();
+                event.preventDefault();
             }
         });
 
