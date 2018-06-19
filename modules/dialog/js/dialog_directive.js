@@ -16,11 +16,11 @@
             restrict: 'E',
             template: '<div class="dialog" ng-class="{ \'dialog--l\': !lxDialog.size || lxDialog.size === \'l\', \'dialog--s\': lxDialog.size === \'s\', \'dialog--m\': lxDialog.size === \'m\' }"><div ng-if="lxDialog.isOpen" ng-transclude></div></div>',
             scope:
-            {
-                autoClose: '=?lxAutoClose',
-                escapeClose: '=?lxEscapeClose',
-                size: '@?lxSize'
-            },
+                {
+                    autoClose: '=?lxAutoClose',
+                    escapeClose: '=?lxEscapeClose',
+                    size: '@?lxSize'
+                },
             link: link,
             controller: LxDialogController,
             controllerAs: 'lxDialog',
@@ -44,9 +44,9 @@
     {
         var lxDialog = this;
         var dialogFilter = angular.element('<div/>',
-        {
-            class: 'dialog-filter'
-        });
+            {
+                class: 'dialog-filter'
+            });
         var dialogHeight;
         var dialogInterval;
         var dialogScrollable;
@@ -55,24 +55,39 @@
         var resizeDebounce;
         var windowHeight;
 
+        var deferredInstance;
+
         lxDialog.autoClose = angular.isDefined(lxDialog.autoClose) ? lxDialog.autoClose : true;
         lxDialog.escapeClose = angular.isDefined(lxDialog.escapeClose) ? lxDialog.escapeClose : true;
         lxDialog.isOpen = false;
         lxDialog.uuid = LxUtils.generateUUID();
 
-        $scope.$on('lx-dialog__open', function(event, id, params)
+        $scope.$on('lx-dialog__open', function(event, id, params, deferred)
         {
             if (id === lxDialog.id)
             {
-                open(params);
+                if (open(params, deferred)) {
+                    deferredInstance = deferred;
+                }
+                event.stopPropagation();
             }
         });
 
-        $scope.$on('lx-dialog__close', function(event, id, canceled, params)
+        $scope.$on('lx-dialog__close', function(event, id, params)
         {
             if (id === lxDialog.id || id === undefined)
             {
-                close(canceled, params);
+                close(false, params);
+                event.stopPropagation();
+            }
+        });
+
+        $scope.$on('lx-dialog__cancel', function(event, id)
+        {
+            if (id === lxDialog.id || id === undefined)
+            {
+                close(true);
+                event.stopPropagation();
             }
         });
 
@@ -116,10 +131,10 @@
 
                 dialogScrollable
                     .css(
-                    {
-                        top: dialogHeader.outerHeight(),
-                        bottom: dialogFooter.outerHeight()
-                    })
+                        {
+                            top: dialogHeader.outerHeight(),
+                            bottom: dialogFooter.outerHeight()
+                        })
                     .off('scroll', checkScrollEnd)
                     .on('scroll', checkScrollEnd);
             }
@@ -175,7 +190,7 @@
         {
             if (lxDialog.isOpen)
             {
-                return;
+                return false;
             }
 
             LxDepthService.register();
@@ -219,9 +234,9 @@
                 if ($element.find('.dialog__scrollable').length === 0)
                 {
                     $element.find('.dialog__content').wrap(angular.element('<div/>',
-                    {
-                        class: 'dialog__scrollable'
-                    }));
+                        {
+                            class: 'dialog__scrollable'
+                        }));
                 }
 
                 dialogScrollable = $element.find('.dialog__scrollable');
@@ -238,6 +253,8 @@
             }, 500);
 
             angular.element($window).on('resize', checkDialogHeightOnResize);
+
+            return true;
         }
 
         function close(_canceled, _params)
@@ -283,8 +300,15 @@
 
                 lxDialog.isOpen = false;
                 dialogHeight = undefined;
-                $rootScope.$broadcast('lx-dialog__close-end', lxDialog.id, _canceled, _params);
+                $rootScope.$broadcast('lx-dialog__close-end', lxDialog.id);
             }, 600);
+
+            if (_canceled) {
+                deferredInstance.reject();
+            } else {
+                deferredInstance.resolve(_params);
+            }
+            deferredInstance = undefined;
         }
     }
 
@@ -328,7 +352,7 @@
             {
                 element.on('click', function()
                 {
-                    LxDialogService.close(element.parents('.dialog').attr('id'), true);
+                    LxDialogService.cancel(element.parents('.dialog').attr('id'));
                 });
 
                 scope.$on('$destroy', function()
