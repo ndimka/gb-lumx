@@ -6,7 +6,7 @@
 .tooltip {
 	position: absolute;
     z-index: 9999;
-	border-radius: $base-round;
+	/*border-radius: $base-round;*/
 	opacity: 0;
 	overflow: hidden;
 	pointer-events: none;
@@ -63,8 +63,8 @@
 	.tooltip__background {
 		@include position(absolute, 0 0 0 0);
 		z-index: -1;
-		border-radius: 50%;
-        background-color: $grey-700;
+		/*border-radius: 50%;*/
+		background-color: rgba(255, 255, 255, 0.8);
 		@include transform(scale(0) translateY(50%));
 		@include transition-property(transform);
    		@include transition-duration(0.6s);
@@ -74,7 +74,7 @@
 	// Tooltip label
 	.tooltip__label {
 		display: block;
-        color: $white-1;
+        color: $black;
 		white-space: nowrap;
 
         @include mq($until: desktop) {
@@ -85,7 +85,7 @@
 
         @include mq($from: desktop) {
             padding: 0 $base-spacing-unit;
-            @include font-size(10px);
+            @include font-size(12px);
             line-height: 22px;
         }
 	}
