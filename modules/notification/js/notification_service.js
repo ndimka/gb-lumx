@@ -6,9 +6,9 @@
         .module('lumx.notification')
         .service('LxNotificationService', LxNotificationService);
 
-    LxNotificationService.$inject = ['$injector', '$rootScope', '$timeout', 'LxDepthService', 'LxEventSchedulerService'];
+    LxNotificationService.$inject = ['$injector', '$rootScope', '$timeout', '$q', 'LxDepthService', 'LxEventSchedulerService'];
 
-    function LxNotificationService($injector, $rootScope, $timeout, LxDepthService, LxEventSchedulerService)
+    function LxNotificationService($injector, $rootScope, $timeout, $q, LxDepthService, LxEventSchedulerService)
     {
         var service = this;
         var dialogFilter;
@@ -19,6 +19,20 @@
 
         service.alert = showAlertDialog;
         service.confirm = showConfirmDialog;
+        service.confirmPromise = function (title, text, buttons) {
+            var d = $q.defer();
+
+            //_title, _text, _buttons, _callback, _unbind
+            showConfirmDialog(title, text, buttons, function (answer) {
+                if (answer) {
+                    d.resolve(answer);
+                }
+                else {
+                    d.reject();
+                }
+            }, true);
+            return d.promise;
+        };
         service.error = notifyError;
         service.info = notifyInfo;
         service.notify = notify;
