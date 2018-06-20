@@ -6724,19 +6724,7 @@
                 ctrl.setInput(input);
                 ctrl.setModel(input.data('$ngModelController'));
 
-                input.on('focus', function()
-                {
-                    var phase = scope.$root.$$phase;
-
-                    if (phase === '$apply' || phase === '$digest')
-                    {
-                        ctrl.focusInput();
-                    }
-                    else
-                    {
-                        scope.$apply(ctrl.focusInput);
-                    }
-                });
+                input.on('focus', ctrl.focusInput);
                 input.on('blur', ctrl.blurInput);
             });
 
@@ -6812,13 +6800,13 @@
         {
             if (!hasValue())
             {
-                $scope.$apply(function()
+                $scope.$evalAsync(function()
                 {
                     lxTextField.isActive = false;
                 });
             }
 
-            $scope.$apply(function()
+            $scope.$evalAsync(function()
             {
                 lxTextField.isFocus = false;
             });
@@ -6834,8 +6822,10 @@
 
         function focusInput()
         {
-            lxTextField.isActive = true;
-            lxTextField.isFocus = true;
+            $scope.$evalAsync(function(){
+                lxTextField.isActive = true;
+                lxTextField.isFocus = true;
+            });
         }
 
         function hasValue()
