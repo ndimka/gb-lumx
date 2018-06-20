@@ -2622,15 +2622,22 @@
         function link(scope, element)
         {
             var focusTimeout;
+            var input = element.find('input');
 
             element.on('click', function(_event)
             {
                 _event.stopPropagation();
             });
 
+            input.keyup(function(e) {
+                if (e.which === 40) { // Down key
+                    element.closest('.dropdown-menu').find('.lx-select-choices__choice')[0].focus();
+                }
+            });
+
             focusTimeout = $timeout(function()
             {
-                element.find('input').focus();
+                input.focus();
             }, 200);
 
             scope.$on('$destroy', function()
@@ -2888,7 +2895,7 @@
                 $element.removeClass('input-file--is-active');
             }
 
-            input.val(undefined);
+            // input.val(undefined);
         }
 
         function updateModel()
@@ -2973,9 +2980,9 @@
         .module('lumx.notification')
         .service('LxNotificationService', LxNotificationService);
 
-    LxNotificationService.$inject = ['$injector', '$rootScope', '$timeout', 'LxDepthService', 'LxEventSchedulerService'];
+    LxNotificationService.$inject = ['$injector', '$rootScope', '$timeout', '$q', 'LxDepthService', 'LxEventSchedulerService'];
 
-    function LxNotificationService($injector, $rootScope, $timeout, LxDepthService, LxEventSchedulerService)
+    function LxNotificationService($injector, $rootScope, $timeout, $q, LxDepthService, LxEventSchedulerService)
     {
         var service = this;
         var dialogFilter;
@@ -2986,6 +2993,20 @@
 
         service.alert = showAlertDialog;
         service.confirm = showConfirmDialog;
+        service.confirmPromise = function (title, text, buttons) {
+            var d = $q.defer();
+
+            //_title, _text, _buttons, _callback, _unbind
+            showConfirmDialog(title, text, buttons, function (answer) {
+                if (answer) {
+                    d.resolve(answer);
+                }
+                else {
+                    d.reject();
+                }
+            }, true);
+            return d.promise;
+        };
         service.error = notifyError;
         service.info = notifyInfo;
         service.notify = notify;
@@ -4173,6 +4194,8 @@
                 toFilter = choices;
             }
 
+            toFilter = toFilter.filter(function( it){ return !it.hidden; });
+
             return $filter('filter')(toFilter, textFilter);
         };
     }
@@ -4187,6 +4210,7 @@
                 allowClear: '=?lxAllowClear',
                 allowNewValue: '=?lxAllowNewValue',
                 autocomplete: '=?lxAutocomplete',
+                autoHide: '=?lxAutoHide',
                 newValueTransform: '=?lxNewValueTransform',
                 choices: '=?lxChoices',
                 choicesCustomStyle: '=?lxChoicesCustomStyle',
@@ -4203,6 +4227,7 @@
                 loading: '=?lxLoading',
                 modelToSelection: '&?lxModelToSelection',
                 multiple: '=?lxMultiple',
+                ngClick: '&?',
                 ngChange: '&?',
                 ngDisabled: '=?',
                 ngModel: '=',
@@ -4221,7 +4246,7 @@
 
         function link(scope, element, attrs)
         {
-            var backwardOneWay = ['customStyle'];
+            var backwardOneWay = ['customStyle', 'choicesClass', 'autoHide'];
             var backwardTwoWay = ['allowClear', 'choices', 'error', 'loading', 'multiple', 'valid'];
 
             angular.forEach(backwardOneWay, function(attribute)
@@ -4724,6 +4749,9 @@
 
         function displayChoice(_choice)
         {
+            if ( _choice && (_choice.hidden || _choice.alwaysHidden)){
+                return;
+            }
             var choiceScope = {
                 $choice: _choice
             };
@@ -5046,8 +5074,13 @@
          * @param {Event}  [evt]  The event that triggered the function.
          */
         function toggleChoice(choice, evt) {
-            if (lxSelect.multiple && !lxSelect.autocomplete && angular.isDefined(evt)) {
+            if (_choice && (_choice.disabled || _choice.alwaysDisabled) && angular.isDefined(evt)) {
                 evt.stopPropagation();
+            }
+            if (lxSelect.multiple && !lxSelect.autocomplete && angular.isDefined(evt)) {
+                if (!lxSelect.autoHide) {
+                    evt.stopPropagation();
+                }
             }
             
             if (lxSelect.areChoicesOpened() && lxSelect.multiple) {
@@ -7186,9 +7219,13 @@ angular.module("lumx.select").run(['$templateCache', function(a) { a.put('select
     '    <div class="lx-select-selected" ng-if="lxSelectSelected.parentCtrl.multiple">\n' +
     '        <span class="lx-select-selected__tag"\n' +
     '              ng-class="{ \'lx-select-selected__tag--is-active\': lxSelectSelected.parentCtrl.activeSelectedIndex === $index }"\n' +
-    '              ng-click="lxSelectSelected.removeSelected(selected, $event)"\n' +
-    '              ng-repeat="selected in lxSelectSelected.parentCtrl.getSelectedModel()"\n' +
-    '              ng-bind-html="lxSelectSelected.parentCtrl.displaySelected(selected)"></span>\n' +
+    '              ng-repeat="selected in lxSelectSelected.parentCtrl.getSelectedModel()">\n' +
+    '                <span ng-bind-html="lxSelectSelected.parentCtrl.displaySelected(selected)"\n' +
+    '                      ng-click="lxSelectSelected.parentCtrl.click(selected, $event)"></span>\n' +
+    '                <lx-icon lx-id="close-circle"\n' +
+    '                         ng-click="lxSelectSelected.removeSelected(selected, $event)"></lx-icon>\n' +
+    '        </span>\n' +
+    '\n' +
     '\n' +
     '        <input type="text"\n' +
     '               placeholder="{{ ::lxSelectSelected.parentCtrl.label }}"\n' +
@@ -7207,7 +7244,7 @@ angular.module("lumx.select").run(['$templateCache', function(a) { a.put('select
     '    </lx-search-filter>\n' +
     '</div>\n' +
     '');
-	a.put('select-choices.html', '<lx-dropdown-menu class="lx-select-choices"\n' +
+	a.put('select-choices.html', '<lx-dropdown-menu class="lx-select-choices {{lxSelectChoices.parentCtrl.choicesClass}}"\n' +
     '                  ng-class="{ \'lx-select-choices--custom-style\': lxSelectChoices.parentCtrl.choicesCustomStyle,\n' +
     '                              \'lx-select-choices--default-style\': !lxSelectChoices.parentCtrl.choicesCustomStyle,\n' +
     '                              \'lx-select-choices--is-multiple\': lxSelectChoices.parentCtrl.multiple,\n' +
@@ -7232,16 +7269,21 @@ angular.module("lumx.select").run(['$templateCache', function(a) { a.put('select
     '\n' +
     '        <div ng-if="::!lxSelectChoices.isArray()">\n' +
     '            <li class="lx-select-choices__subheader"\n' +
+    '                ng-show="(children | filterChoices:lxSelectChoices.parentCtrl.filter:lxSelectChoices.filterModel).length > 0"\n' +
     '                ng-repeat-start="(subheader, children) in lxSelectChoices.parentCtrl.choices"\n' +
     '                ng-bind-html="::lxSelectChoices.parentCtrl.displaySubheader(subheader)"></li>\n' +
     '\n' +
     '            <li class="lx-select-choices__choice"\n' +
     '                ng-class="{ \'lx-select-choices__choice--is-selected\': lxSelectChoices.parentCtrl.isSelected(choice),\n' +
-    '                            \'lx-select-choices__choice--is-focus\': lxSelectChoices.parentCtrl.activeChoiceIndex === $index }"\n' +
+    '                            \'lx-select-choices__choice--is-focus\': lxSelectChoices.parentCtrl.activeChoiceIndex === $index,\n' +
+    '                            \'hidden\': choice.hidden || choice.alwaysHidden }"\n' +
     '                ng-repeat-end\n' +
     '                ng-repeat="choice in children | filterChoices:lxSelectChoices.parentCtrl.filter:lxSelectChoices.parentCtrl.filterModel"\n' +
     '                ng-bind-html="::lxSelectChoices.parentCtrl.displayChoice(choice)"\n' +
-    '                ng-click="lxSelectChoices.parentCtrl.toggleChoice(choice, $event)"></li>\n' +
+    '                ng-click="lxSelectChoices.parentCtrl.toggleChoice(choice, $event)"\n' +
+    '                ng-disabled="::choice.disabled || choice.alwaysDisabled"\n' +
+    '                tabindex="0"\n' +
+    '            ></li>\n' +
     '        </div>\n' +
     '\n' +
     '        <li class="lx-select-choices__subheader" ng-if="lxSelectChoices.parentCtrl.helperDisplayable()">\n' +

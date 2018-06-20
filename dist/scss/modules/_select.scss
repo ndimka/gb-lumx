@@ -105,7 +105,7 @@
     }
 
     .lx-select--default-style.lx-select--is-active.lx-select--view-mode-field & {
-        @include transform(scale(0.75) translateY(0));
+        @include transform(scale(0.75) translateY(-4 * $base-spacing-unit));
     }
 
     .lx-select--default-style.lx-select--theme-light & {
@@ -262,12 +262,12 @@
             cursor: pointer;
             @include user-select(none);
 
-            &:after {
+/*            &:after {
                 @include mdi;
                 @include mdi-icon('close-circle');
                 color: $black-3;
             }
-
+*/
             .#{$mdi-css-prefix} {
                 margin-right: $base-spacing-unit / 2;
                 color: $black-2;
@@ -290,9 +290,13 @@
             pointer-events: none;
             color: $black-3;
 
-            &:after {
+            [lx-id="close-circle"] {
                 display: none;
             }
+
+            //&:after {
+            //    display: none;
+            //}
         }
 
         .lx-select--default-style.lx-select--view-mode-field & {
@@ -454,7 +458,7 @@
             @include size(24px);
             margin-right: $base-spacing-unit * 2;
             @include font-size(18px);
-            color: $black-2;
+            color: $black-4;
             line-height: 24px;
             text-align: center;
         }

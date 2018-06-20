@@ -40,6 +40,8 @@
                 toFilter = choices;
             }
 
+            toFilter = toFilter.filter(function( it){ return !it.hidden; });
+
             return $filter('filter')(toFilter, textFilter);
         };
     }
@@ -54,6 +56,7 @@
                 allowClear: '=?lxAllowClear',
                 allowNewValue: '=?lxAllowNewValue',
                 autocomplete: '=?lxAutocomplete',
+                autoHide: '=?lxAutoHide',
                 newValueTransform: '=?lxNewValueTransform',
                 choices: '=?lxChoices',
                 choicesCustomStyle: '=?lxChoicesCustomStyle',
@@ -70,6 +73,7 @@
                 loading: '=?lxLoading',
                 modelToSelection: '&?lxModelToSelection',
                 multiple: '=?lxMultiple',
+                ngClick: '&?',
                 ngChange: '&?',
                 ngDisabled: '=?',
                 ngModel: '=',
@@ -88,7 +92,7 @@
 
         function link(scope, element, attrs)
         {
-            var backwardOneWay = ['customStyle'];
+            var backwardOneWay = ['customStyle', 'choicesClass', 'autoHide'];
             var backwardTwoWay = ['allowClear', 'choices', 'error', 'loading', 'multiple', 'valid'];
 
             angular.forEach(backwardOneWay, function(attribute)
@@ -591,6 +595,9 @@
 
         function displayChoice(_choice)
         {
+            if ( _choice && (_choice.hidden || _choice.alwaysHidden)){
+                return;
+            }
             var choiceScope = {
                 $choice: _choice
             };
@@ -913,8 +920,13 @@
          * @param {Event}  [evt]  The event that triggered the function.
          */
         function toggleChoice(choice, evt) {
-            if (lxSelect.multiple && !lxSelect.autocomplete && angular.isDefined(evt)) {
+            if (_choice && (_choice.disabled || _choice.alwaysDisabled) && angular.isDefined(evt)) {
                 evt.stopPropagation();
+            }
+            if (lxSelect.multiple && !lxSelect.autocomplete && angular.isDefined(evt)) {
+                if (!lxSelect.autoHide) {
+                    evt.stopPropagation();
+                }
             }
             
             if (lxSelect.areChoicesOpened() && lxSelect.multiple) {
