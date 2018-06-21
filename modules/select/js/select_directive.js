@@ -1224,11 +1224,11 @@
          * @param {string} dropdownId The id of the dropdown that ends to close.
          */
         $scope.$on('lx-dropdown__close-end', function onDropdownClose(evt, dropdownId) {
-            if (lxSelect.choicesViewMode !== 'panes' || dropdownId !== 'dropdown-' + lxSelect.uuid) {
+            if (dropdownId !== 'dropdown-' + lxSelect.uuid) {
                 return;
             }
 
-            angular.element(document).off('keydown', _onKeyDown);
+            $element.off('keydown', _onKeyDown);
 
             lxSelect.filterModel = undefined;
             lxSelect.matchingPaths = undefined;
@@ -1244,11 +1244,11 @@
          * @param {string} dropdownId The id of the dropdown that ends to close.
          */
         $scope.$on('lx-dropdown__open-start', function onDropdownOpen(evt, dropdownId) {
-            if (lxSelect.choicesViewMode !== 'panes' || dropdownId !== 'dropdown-' + lxSelect.uuid) {
+            if (dropdownId !== 'dropdown-' + lxSelect.uuid) {
                 return;
             }
 
-            angular.element(document).on('keydown', _onKeyDown);
+            $element.on('keydown', _onKeyDown);
 
             $timeout(function delayFocusSearchFilter() {
                 $element.find('.lx-select-selected__filter input').focus();
