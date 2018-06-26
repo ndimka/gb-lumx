@@ -26,7 +26,6 @@
             <li class="lx-select-choices__subheader"
                 ng-show="(children | filterChoices:lxSelectChoices.parentCtrl.filter:lxSelectChoices.filterModel).length > 0"
                 ng-repeat-start="(subheader, children) in lxSelectChoices.parentCtrl.choices"
-                ng-hide="choice.hidden || choice.alwaysHidden"
                 ng-bind-html="::lxSelectChoices.parentCtrl.displaySubheader(subheader)"></li>
 
             <li class="lx-select-choices__choice"
