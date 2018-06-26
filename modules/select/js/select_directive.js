@@ -1358,6 +1358,7 @@
 
         lxSelectChoices.isArray = isArray;
         lxSelectChoices.setParentController = setParentController;
+        lxSelectChoices.onChoiceKeyDown = onChoiceKeyDown;
 
         $scope.$on('$destroy', function()
         {
@@ -1365,6 +1366,31 @@
         });
 
         ////////////
+        function onChoiceKeyDown(_choice, _event)
+        {
+            if (_event.which === 40) { // Down key
+                _event.preventDefault();
+                var last = $(_event.target).parent().find('.lx-select-choices__choice').not('[disabled],.hidden').last().get(0);
+                if (_event.target !== last) {
+                    $(_event.target).nextAll('.lx-select-choices__choice').not('[disabled],.hidden').first().focus();
+                }
+            }
+            else if (_event.which === 38) { // Up key
+                _event.preventDefault();
+                var first = $(_event.target).parent().find('.lx-select-choices__choice').not('[disabled],.hidden').first().get(0);
+                if (_event.target === first) {
+                    $(_event.target).parent().siblings('.lx-select-choices__filter').find('input').focus();
+                }
+                else {
+                    $(_event.target).prevAll('.lx-select-choices__choice').not('[disabled],.hidden').first().focus();
+                }
+            }
+            else if (_event.which === 13) { // Enter key
+                $timeout(function() {
+                    $(_event.target).click();
+                });
+            }
+        }
 
         function isArray(choices)
         {

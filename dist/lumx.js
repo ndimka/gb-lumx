@@ -5512,6 +5512,7 @@
 
         lxSelectChoices.isArray = isArray;
         lxSelectChoices.setParentController = setParentController;
+        lxSelectChoices.onChoiceKeyDown = onChoiceKeyDown;
 
         $scope.$on('$destroy', function()
         {
@@ -5519,6 +5520,31 @@
         });
 
         ////////////
+        function onChoiceKeyDown(_choice, _event)
+        {
+            if (_event.which === 40) { // Down key
+                _event.preventDefault();
+                var last = $(_event.target).parent().find('.lx-select-choices__choice').not('[disabled],.hidden').last().get(0);
+                if (_event.target !== last) {
+                    $(_event.target).nextAll('.lx-select-choices__choice').not('[disabled],.hidden').first().focus();
+                }
+            }
+            else if (_event.which === 38) { // Up key
+                _event.preventDefault();
+                var first = $(_event.target).parent().find('.lx-select-choices__choice').not('[disabled],.hidden').first().get(0);
+                if (_event.target === first) {
+                    $(_event.target).parent().siblings('.lx-select-choices__filter').find('input').focus();
+                }
+                else {
+                    $(_event.target).prevAll('.lx-select-choices__choice').not('[disabled],.hidden').first().focus();
+                }
+            }
+            else if (_event.which === 13) { // Enter key
+                $timeout(function() {
+                    $(_event.target).click();
+                });
+            }
+        }
 
         function isArray(choices)
         {
@@ -7254,11 +7280,15 @@ angular.module("lumx.select").run(['$templateCache', function(a) { a.put('select
     '        <div ng-if="::lxSelectChoices.isArray()">\n' +
     '            <li class="lx-select-choices__choice"\n' +
     '                ng-class="{ \'lx-select-choices__choice--is-selected\': lxSelectChoices.parentCtrl.isSelected(choice),\n' +
-    '                            \'lx-select-choices__choice--is-focus\': lxSelectChoices.parentCtrl.activeChoiceIndex === $index }"\n' +
+    '                            \'lx-select-choices__choice--is-focus\': lxSelectChoices.parentCtrl.activeChoiceIndex === $index,\n' +
+    '                             \'hidden\' : choice.hidden || choice.alwaysHidden }"\n' +
     '                ng-repeat="choice in lxSelectChoices.parentCtrl.choices | filterChoices:lxSelectChoices.parentCtrl.filter:lxSelectChoices.parentCtrl.filterModel"\n' +
     '                ng-bind-html="::lxSelectChoices.parentCtrl.displayChoice(choice)"\n' +
     '                ng-hide="choice.hidden || choice.alwaysHidden"\n' +
-    '                ng-click="lxSelectChoices.parentCtrl.toggleChoice(choice, $event)"></li>\n' +
+    '                ng-click="lxSelectChoices.parentCtrl.toggleChoice(choice, $event)"\n' +
+    '                ng-keydown="lxSelectChoices.onChoiceKeyDown(choice, $event)"\n' +
+    '                tabindex="0"\n' +
+    '            ></li>\n' +
     '        </div>\n' +
     '\n' +
     '        <div ng-if="::!lxSelectChoices.isArray()">\n' +
@@ -7271,12 +7301,14 @@ angular.module("lumx.select").run(['$templateCache', function(a) { a.put('select
     '                ng-hide="choice.hidden || choice.alwaysHidden"\n' +
     '                ng-class="{ \'lx-select-choices__choice--is-selected\': lxSelectChoices.parentCtrl.isSelected(choice),\n' +
     '                            \'lx-select-choices__choice--is-focus\': lxSelectChoices.parentCtrl.activeChoiceIndex === $index,\n' +
+    '                            \'hidden\' : choice.hidden || choice.alwaysHidden\n' +
     '                            }"\n' +
     '                ng-repeat-end\n' +
     '                ng-repeat="choice in children | filterChoices:lxSelectChoices.parentCtrl.filter:lxSelectChoices.parentCtrl.filterModel"\n' +
     '                ng-bind-html="::lxSelectChoices.parentCtrl.displayChoice(choice)"\n' +
     '                ng-click="lxSelectChoices.parentCtrl.toggleChoice(choice, $event)"\n' +
     '                ng-disabled="::choice.disabled || choice.alwaysDisabled"\n' +
+    '                ng-keydown="lxSelectChoices.onChoiceKeyDown(choice, $event)"\n' +
     '                tabindex="0"\n' +
     '            ></li>\n' +
     '        </div>\n' +

@@ -469,7 +469,8 @@
             }
         }
 
-        &.lx-select-choices__choice--is-focus {
+        &.lx-select-choices__choice--is-focus,
+        &:focus {
             background-color: $grey-200;
         }
     }
