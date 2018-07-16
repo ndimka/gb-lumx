@@ -920,7 +920,7 @@
          * @param {Event}  [evt]  The event that triggered the function.
          */
         function toggleChoice(choice, evt) {
-            if (choice && (choice.disabled || _choice.alwaysDisabled) && angular.isDefined(evt)) {
+            if (choice && (choice.disabled || choice.alwaysDisabled) && angular.isDefined(evt)) {
                 evt.stopPropagation();
             }
             if (lxSelect.multiple && !lxSelect.autocomplete && angular.isDefined(evt)) {
